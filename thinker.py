@@ -1,7 +1,7 @@
 """
 Thinker based GUI quickhull game board.
 
-@author Haoyang Cui
+@author James Ford
 """
 import tkinter as tk
 import quickhull
