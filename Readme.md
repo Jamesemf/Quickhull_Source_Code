@@ -34,3 +34,7 @@ The algorithm relies on the **cross product** to determine the orientation of po
 
 1. Clone or download this repository.
 2. Run the `visualise.py` script:   "python visualise.py" (quickhull.py must be in the same directory)
+
+### Test cases 
+1. Try run the `testcases.py` script:   "python testcases.py"             (quickhull.py must be in the same directory)
+1. Try run the `testcases.py` script:   "python -m unittest quickhull.py" (quickhull.py must be in the same directory)

@@ -10,7 +10,8 @@ import random
 import quickhull
 
 
-# Helper functions for coordinate conversions
+# --- Helper Functions for Coordinate Conversions ---
+
 def screen_to_math(x: int, y: int):
     """
     Calculate the math coordinate of the point based on screen coordinate.
@@ -19,7 +20,6 @@ def screen_to_math(x: int, y: int):
     :return: tuple of math coordinate of the point.
     """
     return (x - CANVAS_WIDTH / 2) / SCALE, (CANVAS_HEIGHT / 2 - y) / SCALE
-
 
 def math_to_screen(x: int, y: int):
     """
@@ -31,32 +31,39 @@ def math_to_screen(x: int, y: int):
     return x * SCALE + CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - y * SCALE
 
 
-# Function to draw grid and axes
+# --- Functions for Drawing and Interaction ---
+
 def draw_grid():
     """
-    Create grid and XY axis on the canvas.
+    Draw the gridlines and the X/Y axis on the canvas 
     :return: None
     """
+
+    # Clear any existing grid first
     CANVAS.delete("grid")
+    
+    # Draw vertical and horizontal grid lines
     for i in range(0, CANVAS_WIDTH, GRID_SPACING):
         CANVAS.create_line(i, 0, i, CANVAS_HEIGHT, fill="lightgrey", tags="grid")
     for i in range(0, CANVAS_HEIGHT, GRID_SPACING):
         CANVAS.create_line(0, i, CANVAS_WIDTH, i, fill="lightgrey", tags="grid")
+    
+    # Draw thicker X and Y axes
     CANVAS.create_line(CANVAS_WIDTH / 2, 0, CANVAS_WIDTH / 2, CANVAS_HEIGHT, fill="#3B3B3B", width=2, tags="grid")
     CANVAS.create_line(0, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT / 2, fill="#3B3B3B", width=2, tags="grid")
 
 
-# Adjust canvas size dynamically
 def resize_canvas(event):
     """
-    Used to scale the points and canvas when adjusted by the user
+    Adjusts the canvas and scaling dynamically when the window is resized to ensure the points stay proportionate no matter the canvas size.
     :param event: Thinker event listener.
     """
     global CANVAS_WIDTH, CANVAS_HEIGHT, SCALE
     CANVAS_WIDTH, CANVAS_HEIGHT = event.width, event.height
-    SCALE = min(CANVAS_WIDTH, CANVAS_HEIGHT) / 50  # Adjust scale dynamically
-    draw_grid()
+    SCALE = min(CANVAS_WIDTH, CANVAS_HEIGHT) / 50  # Keep the grid proportional
+    draw_grid()  
     redraw_points_and_hull()
+
 
 
 def redraw_points_and_hull():
@@ -64,9 +71,10 @@ def redraw_points_and_hull():
     Redraw all points and the convex hull when the canvas is resized.
     """
     CANVAS.delete("all")
-    draw_grid()
+    draw_grid()  
     for point in POINTS:
         plot_point(point, size=6, fill="#FF5252", label=True)
+    # If we have a convex hull, redraw it too
     if CONVEX_HULL_DATA:
         calculate_convex_hull()
 
@@ -74,23 +82,21 @@ def redraw_points_and_hull():
 # Plot a point on the canvas
 def plot_point(point, size=5, label=False, **kwargs):
     """
-    Create oval point on canvas.
+    Draw a specific point on the canvas at the specified coordinates
     :param point: Point (x, y) coordinate in tuple.
     :param size: Size of the point oval.
     :param label: Whether display coordinate label, default is not.
     :param kwargs: Additional keyword arguments for 'create_oval'.
     :return:
     """
-    screen_x, screen_y = math_to_screen(*point)
+    screen_x, screen_y = math_to_screen(*point)  # Convert math coords to screen coords
     CANVAS.create_oval(screen_x - size, screen_y - size, screen_x + size, screen_y + size, **kwargs)
     if label:
         CANVAS.create_text(screen_x, screen_y + 15, text=f"({point[0]:.1f}, {point[1]:.1f})", fill="#5A5A5A", tags="points")
 
-
-# Draw a polygon connecting points
 def draw_polygon(points, color, width=2, tags="polygon"):
     """
-    Used to draw the convex hull on the canvas
+    Draws the convex hull by connect a list of points with lines
     :param points: set of points making up the polygon
     :param colour: colour of the polygon
     :param width: the width of the lines to use to create the polygon
@@ -99,8 +105,6 @@ def draw_polygon(points, color, width=2, tags="polygon"):
     for i in range(len(points)):
         line_point(points[i], points[(i + 1) % len(points)], fill=color, width=width, tags=tags)
 
-
-# Draw a line between two points
 def line_point(point_a, point_b, **kwargs):
     """
     Create a line connect two points on canvas.
@@ -113,11 +117,9 @@ def line_point(point_a, point_b, **kwargs):
     screen_b = math_to_screen(*point_b)
     CANVAS.create_line(*screen_a, *screen_b, **kwargs)
 
-
-# Add user plot
 def user_plot(event):
     """
-    Create oval point with coordinate label where the user clicks on the canvas.
+    Add a point where the user clicks on the canvas.
     :param event: Thinker event listener.
     :return: None
     """
@@ -128,17 +130,15 @@ def user_plot(event):
         plot_point(snapped_point, size=6, fill="#FF5252", label=True, tags="user-point")
         update_point_count()
 
-
 def update_point_count():
     """
-    Update the point count to reflect points on the canvas
+    Update the display to show how many points are currently on the canvas.
     """
     POINT_COUNT_LABEL.config(text=f"Points: {len(POINTS)}")
 
-
 def reset_canvas():
     """
-    Reset the entire canvas.
+    Clears all the points on the canvas and resets it to its inital state
     :return: None
     """
     CANVAS.delete("all")
@@ -149,36 +149,33 @@ def reset_canvas():
     global CONVEX_HULL_DATA
     CONVEX_HULL_DATA = None
 
-
-
 def calculate_convex_hull():
     """
-    Calculate convex hull with quickhull and display on canvas.
+    Compute and visualize the convex hull for the current set of points.
     :return: None
     """
-    if len(POINTS) < 2:
-        return
     global CONVEX_HULL_DATA
-    CANVAS.delete("hull")
-    CONVEX_HULL_DATA = quickhull.quick_hull(POINTS)
-    hull = CONVEX_HULL_DATA[0]
-    draw_polygon(hull, color="#0078D4", width=2, tags="hull")
-    for point in hull:
+    CANVAS.delete("hull")  # Remove any previous hull
+    CONVEX_HULL_DATA = quickhull.quick_hull(POINTS)  # Run the QuickHull algorithm
+    hull = CONVEX_HULL_DATA[0]  # Get the list of hull points
+    draw_polygon(hull, color="#0078D4", width=2, tags="hull")  # Draw the hull
+    for point in hull:  # Highlight each hull point
         plot_point(point, size=7, fill="#00C853", tags="hull")
-    BUTTONS["steps-button"].config(state=tk.NORMAL)
+    BUTTONS["steps-button"].config(state=tk.NORMAL)  # Enable the "steps" button
 
 
-# Show iterative steps of the QuickHull algorithm
+# --- Additional Functionalities ---
+
 def show_steps():
     """
-    Demonstrate the steps for computing the convexhull
+    Show the iterative steps taken by the QuickHull algorithm to compute the convex hull.
     :return: None
     """
-    if CONVEX_HULL_DATA is None:
+    if CONVEX_HULL_DATA is None:  # Ensure the convex hull has been calculated
         return
     
-    steps = CONVEX_HULL_DATA[1]
-    CANVAS.delete("steps")
+    steps = CONVEX_HULL_DATA[1]  # Extract the list of intermediate steps
+    CANVAS.delete("steps")  # Clear previous step visualizations
     toggle_buttons(state=tk.DISABLED)
 
     def visualize_step(i):
@@ -187,48 +184,49 @@ def show_steps():
         :param points: List of points for the step.
         :return: None
         """
-        CANVAS.delete("steps")
-        step_points = steps[:i + 1]
-        step_hull = quickhull.quick_hull(step_points)[0]
-        draw_polygon(step_hull, color="orange", tags="steps")
-        for point in step_hull:
+        CANVAS.delete("steps") 
+        step_points = steps[:i + 1]  # Get the points up to this step
+        step_hull = quickhull.quick_hull(step_points)[0]  # Calculate the hull for this step
+        draw_polygon(step_hull, color="orange", tags="steps")  
+        for point in step_hull: 
             plot_point(point, size=6, fill="lightgreen", tags="steps")
 
+    # Schedule each step to be shown with a delay for visual effect
     for i in range(len(steps)):
         ROOT.after(i * 500, lambda i=i: visualize_step(i))
 
+    # Once all steps have been shown, re-enable the buttons
     ROOT.after(len(steps) * 500, lambda: toggle_buttons(state="normal"))
 
-
-# Optimized layer peeling
 def peel_layers():
     """
-    Iterately calls the quick_hull algorithm and visualises the convex hulls at each layer 
+    Iterately calls the quick_hull algorithm and visualises the convex hulls at each layer.
+    Each "layer" represents an outer layer of points forming part of the convex hull.
     """
     CANVAS.delete("peel")
-    points = POINTS[:]
+    points = POINTS[:]  # Copy the points list so we can modify it
     layer_colors = ["#FFC107", "#4CAF50", "#FF5722", "#03A9F4", "#673AB7"]
-    layer_index = 0
+    layer_index = 0  # Start from the first color
 
     if not points:
         return
 
-    while points:
-        hull = quickhull.quick_hull(points)[0]
-        if not hull:
+    while points:  
+        hull = quickhull.quick_hull(points)[0]  # Calculate the convex hull for the remaining points
+        if not hull:  # If no hull is found, stop
             break
         draw_polygon(hull, color=layer_colors[layer_index % len(layer_colors)], width=2, tags="peel")
-        for point in hull:
+        for point in hull:  # Highlight the points that form the hull
             plot_point(point, size=7, fill=layer_colors[layer_index % len(layer_colors)], tags="peel")
-        points = [p for p in points if p not in hull]
-        layer_index += 1
+        points = [p for p in points if p not in hull]  # Remove the points that are part of this hull
+        layer_index += 1  # Move to the next layer color
 
 
 # Generate random points
 def generate_random_points(num_points=20):
     """
     Generate a random set of points on the graph
-    : param  num_points: The number of points to randomly place on the canvas
+    :param num_points: The number of points to randomly place on the canvas
     """
     reset_canvas()
     for _ in range(num_points):
@@ -252,41 +250,50 @@ def toggle_buttons(state, exclude=[]):
 
 # Initialization
 if __name__ == "__main__":
-    CANVAS_WIDTH, CANVAS_HEIGHT = 600, 600
-    GRID_SPACING, SCALE = 25, 12.5
-    POINTS = []
-    CONVEX_HULL_DATA = None
+    """
+    Initialize the main Tkinter window and set up the canvas and buttons.
+    This is where the visualization and user interaction is set up.
+    """
+    CANVAS_WIDTH, CANVAS_HEIGHT = 600, 600  
+    GRID_SPACING, SCALE = 25, 12.5  
+    POINTS = []  # List to store user-selected points
+    CONVEX_HULL_DATA = None  # Will hold the data related to the convex hull
 
-    ROOT = tk.Tk()
+    ROOT = tk.Tk()  
     ROOT.title("QuickHull Visualization")
-    ROOT.configure(bg="#2E2E2E")
+    ROOT.configure(bg="#2E2E2E") 
 
-    style = ttk.Style()
+    style = ttk.Style() 
     style.theme_use("clam")
     style.configure("TButton", padding=4, font=("Arial", 12), foreground="#FFFFFF", background="#80669d")
     style.configure("TLabel", font=("Arial", 12), foreground="#FFFFFF", background="#2E2E2E")
 
+    # Create the main canvas where we will draw the points and hull
     CANVAS = tk.Canvas(ROOT, width=CANVAS_WIDTH, height=CANVAS_HEIGHT, bg="#F4F4F4", highlightthickness=0)
-    CANVAS.grid(row=0, column=0, columnspan=5, sticky="nsew")
-    CANVAS.bind("<Button-1>", user_plot)
-    CANVAS.bind("<Configure>", resize_canvas)
+    CANVAS.grid(row=0, column=0, columnspan=5, sticky="nsew")  # Position the canvas on the grid
+    CANVAS.bind("<Button-1>", user_plot)  # Bind the left mouse click to add points
+    CANVAS.bind("<Configure>", resize_canvas)  # Bind window resizing to scale the points and canvas
 
+    # Set up the layout of the window with a grid system
     ROOT.rowconfigure(0, weight=1)
     ROOT.columnconfigure(0, weight=1)
 
+    # Create a label to display the number of points
     POINT_COUNT_LABEL = ttk.Label(ROOT, text="Points: 0")
     POINT_COUNT_LABEL.grid(row=1, column=0, columnspan=5)
 
+    # Define the buttons and their actions
     BUTTONS = {
         "reset-button": ttk.Button(ROOT, text="Reset", command=reset_canvas),
         "calculate-button": ttk.Button(ROOT, text="Calculate Convex Hull", command=calculate_convex_hull),
         "steps-button": ttk.Button(ROOT, text="Show Steps", command=show_steps, state=tk.DISABLED),
         "layers-button": ttk.Button(ROOT, text="Peel Layers", command=peel_layers),
-        "random-button": ttk.Button(ROOT, text="Generate Random Points", command=lambda: generate_random_points(random.randint(15,70))),
+        "random-button": ttk.Button(ROOT, text="Generate Random Points", command=lambda: generate_random_points(random.randint(5,25))),
     }
 
+    # Arrange the buttons in the grid
     for i, button in enumerate(BUTTONS.values()):
         button.grid(row=2, column=i)
 
-    draw_grid()
-    ROOT.mainloop()
+    draw_grid()  # Draw the initial grid
+    ROOT.mainloop()  # Start the Tkinter event loop

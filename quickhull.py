@@ -4,7 +4,6 @@ QuickHull Algorithm Implementation
 Author: James Ford
 """
 
-
 def cross_product(p1: tuple, p2: tuple, p3: tuple) -> float:
     """
     Compute the cross product of vectors 'p1p2' and 'p1p3' to measure the relative orientation.
@@ -44,9 +43,16 @@ def quick_hull(points: list) -> tuple:
     if not all(isinstance(point, tuple) and len(point) == 2 for point in points):
         raise ValueError("Input points must be a list of 2D coordinate tuples.")
     
+    
+    if len(points) == 1:
+        return points, points
+    
+    if len(points) == 0:
+        return [], []
+    
     # Identify the leftmost and rightmost points
-    p1 = min(points, key=lambda p: p[0])  # Leftmost
-    p2 = max(points, key=lambda p: p[0])  # Rightmost
+    p1 = min(points, key=lambda p: p[0])
+    p2 = max(points, key=lambda p: p[0])
     search_order.append(p1)
     search_order.append(p2)
 
@@ -69,7 +75,10 @@ def quick_hull(points: list) -> tuple:
 
     # Combine hull points
     convex_hull = above_hull + below_hull
+
     return convex_hull, search_order
+
+
 
 def find_hull(search_order: list, point_set: list, p1: tuple, p2: tuple) -> list:
     """
